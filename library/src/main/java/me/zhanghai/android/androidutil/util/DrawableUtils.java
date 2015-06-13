@@ -21,6 +21,7 @@ import android.graphics.drawable.PaintDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.net.Uri;
+import android.support.annotation.Keep;
 import android.view.Gravity;
 
 import java.io.InputStream;
@@ -159,7 +160,7 @@ public class DrawableUtils {
 
         drawable.setColorFilter(filter.getColorFilter());
         ObjectAnimator animator = ObjectAnimator.ofObject(filter, "colorMatrix", evaluator,
-                evaluator.getColorMatrix());
+                evaluator.getColorMatrix() /* Dummy */);
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -175,7 +176,7 @@ public class DrawableUtils {
                 context.getResources().getInteger(android.R.integer.config_longAnimTime));
     }
 
-    private static class ImageLoadingEvaluator implements TypeEvaluator {
+    private static class ImageLoadingEvaluator implements TypeEvaluator<ColorMatrix> {
 
         private ColorMatrix colorMatrix = new ColorMatrix();
         private float[] elements = new float[20];
@@ -185,7 +186,7 @@ public class DrawableUtils {
         }
 
         @Override
-        public Object evaluate(float fraction, Object startValue, Object endValue) {
+        public ColorMatrix evaluate(float fraction, ColorMatrix startValue, ColorMatrix endValue) {
 
             // There are 3 phases so we multiply fraction by that amount
             float phase = fraction * 3;
@@ -227,10 +228,12 @@ public class DrawableUtils {
             return filter;
         }
 
+        @Keep
         public ColorMatrix getColorMatrix() {
             return matrix;
         }
 
+        @Keep
         public void setColorMatrix(ColorMatrix matrix) {
             this.matrix = matrix;
             filter = new ColorMatrixColorFilter(matrix);
