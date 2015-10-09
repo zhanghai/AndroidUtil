@@ -68,33 +68,37 @@ public class AppUtils {
 
     private static final int RESTART_APPLICATION_DELAY = 250;
 
-    public static void crossfadeViews(final View fromView, final View toView) {
+    public static void crossfadeViews(final View fromView, View toView) {
 
         int duration = fromView.getResources()
                 .getInteger(android.R.integer.config_shortAnimTime);
 
-        fromView.setVisibility(View.VISIBLE);
         fromView.animate()
                 .setDuration(duration)
                 .alpha(0)
                 .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        fromView.setVisibility(View.GONE);
-                    }
-                });
+                        private boolean mCanceled = false;
+                        @Override
+                        public void onAnimationCancel(Animator animation) {
+                            mCanceled = true;
+                        }
+                        @Override
+                        public void onAnimationEnd(Animator animator) {
+                            if (!mCanceled) {
+                                fromView.setVisibility(View.INVISIBLE);
+                            }
+                        }
+                })
+                .start();
 
+        toView.setAlpha(0);
         toView.setVisibility(View.VISIBLE);
         toView.animate()
-                .setDuration(duration)
+                .setDuration(NOTE)
+                // NOTE: We need to remove any previously set listener or Android will reuse it.
+                .setListener(null)
                 .alpha(1)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-
-                        toView.setVisibility(View.VISIBLE);
-                    }
-                });
+                .start();
     }
 
     public static List<Integer> getAbsListViewCheckedItemPositions(AbsListView absListView) {
@@ -290,14 +294,11 @@ public class AppUtils {
         new Handler().postDelayed(runnable, delayMillis);
     }
 
-    public static void postOnPreDraw(View view, final Runnable runnable) {
-        final ViewTreeObserver observer = view.getViewTreeObserver();
-        observer.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+    public static void postOnPreDraw(final View view, final Runnable runnable) {
+        view.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
-                if (observer.isAlive()) {
-                    observer.removeOnPreDrawListener(this);
-                }
+                view.getViewTreeObserver().removeOnPreDrawListener(this);
                 runnable.run();
                 return true;
             }
